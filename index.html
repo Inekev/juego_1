@@ -3,210 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dice Party - Juego de Dados Multijugador</title>
+    <title>Dice Party - Juego de Dados</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes roll {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
         }
+
+        @keyframes roll {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
+            from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         .rolling {
-            animation: roll 0.5s ease-in-out;
+            animation: roll 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
+
         .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+            animation: fadeIn 0.4s ease-out;
         }
+
+        .pulse-anim {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
         .die {
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
+
         .die:hover {
-            transform: scale(1.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
+
         .die.locked {
-            box-shadow: 0 0 0 3px #3b82f6;
+            box-shadow: 0 0 0 3px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.3);
         }
+
         .score-cell {
-            transition: background-color 0.2s ease;
+            transition: all 0.15s ease;
         }
+
         .score-cell:hover:not(.used) {
-            background-color: #dbeafe;
+            background-color: #f0f9ff;
+            transform: translateX(2px);
             cursor: pointer;
         }
+
         .score-cell.used {
-            background-color: #f3f4f6;
-            color: #6b7280;
+            background-color: #f9fafb;
+            color: #9ca3af;
         }
-        .player-color-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .player-color-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .player-color-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .player-color-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-        .player-color-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+        .player-card {
+            transition: all 0.3s ease;
+        }
+
+        .player-card.active {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
         .hidden { display: none; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
 
     <!-- Setup Screen -->
-    <div id="setupScreen" class="container mx-auto px-4 py-8 max-w-2xl">
-        <div class="text-center mb-8 fade-in">
-            <h1 class="text-6xl font-bold text-white mb-2">🎲 Dice Party 🎲</h1>
-            <p class="text-white text-xl">¡Juego Multijugador!</p>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-2xl p-8 fade-in">
-            <h2 class="text-3xl font-bold text-center mb-6 text-purple-600">Configuración del Juego</h2>
-
-            <!-- Number of Players -->
-            <div class="mb-6">
-                <label class="block text-gray-700 font-bold mb-3 text-lg">¿Cuántos jugadores? (1-5)</label>
-                <div class="flex gap-3 justify-center">
-                    <button onclick="selectPlayerCount(1)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">1</button>
-                    <button onclick="selectPlayerCount(2)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">2</button>
-                    <button onclick="selectPlayerCount(3)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">3</button>
-                    <button onclick="selectPlayerCount(4)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">4</button>
-                    <button onclick="selectPlayerCount(5)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">5</button>
-                </div>
+    <div id="setupScreen" class="min-h-screen flex items-center justify-center px-4 py-12">
+        <div class="max-w-2xl w-full">
+            <div class="text-center mb-12 fade-in">
+                <h1 class="text-6xl font-bold gradient-text mb-3">Dice Party</h1>
+                <p class="text-gray-600 text-lg">Juego de dados multijugador</p>
             </div>
 
-            <!-- Player Names -->
-            <div id="playerNamesContainer" class="mb-6 hidden">
-                <label class="block text-gray-700 font-bold mb-3 text-lg">Nombres de los jugadores:</label>
-                <div id="playerNameInputs" class="space-y-3">
-                    <!-- Player name inputs will be generated here -->
-                </div>
-            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-8 fade-in border border-gray-100">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-8">Configuración del juego</h2>
 
-            <!-- Start Game Button -->
-            <div class="text-center">
-                <button id="startGameBtn" onclick="startGame()" class="hidden bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-lg font-bold text-xl hover:from-green-600 hover:to-blue-600 transform hover:scale-105 transition-all shadow-lg">
-                    🎮 ¡Comenzar Juego!
-                </button>
+                <!-- Number of Players -->
+                <div class="mb-8">
+                    <label class="block text-sm font-medium text-gray-700 mb-4">Número de jugadores</label>
+                    <div class="flex gap-3 justify-center">
+                        <button onclick="selectPlayerCount(1)" class="player-select-btn w-14 h-14 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all transform hover:scale-105 border-2 border-transparent">1</button>
+                        <button onclick="selectPlayerCount(2)" class="player-select-btn w-14 h-14 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all transform hover:scale-105 border-2 border-transparent">2</button>
+                        <button onclick="selectPlayerCount(3)" class="player-select-btn w-14 h-14 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all transform hover:scale-105 border-2 border-transparent">3</button>
+                        <button onclick="selectPlayerCount(4)" class="player-select-btn w-14 h-14 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all transform hover:scale-105 border-2 border-transparent">4</button>
+                        <button onclick="selectPlayerCount(5)" class="player-select-btn w-14 h-14 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all transform hover:scale-105 border-2 border-transparent">5</button>
+                    </div>
+                </div>
+
+                <!-- Player Names -->
+                <div id="playerNamesContainer" class="mb-8 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-4">Nombres de jugadores</label>
+                    <div id="playerNameInputs" class="space-y-3">
+                        <!-- Player name inputs will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Start Game Button -->
+                <div class="text-center">
+                    <button id="startGameBtn" onclick="startGame()" class="hidden bg-gray-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-gray-800 transform hover:scale-105 transition-all shadow-lg">
+                        Comenzar juego
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Game Screen -->
-    <div id="gameScreen" class="container mx-auto px-4 py-8 max-w-7xl hidden">
-        <!-- Header -->
-        <div class="text-center mb-6">
-            <h1 class="text-4xl font-bold text-white mb-2">🎲 Dice Party 🎲</h1>
-            <div id="currentPlayerBanner" class="text-2xl font-bold text-white bg-black bg-opacity-30 rounded-lg py-3 px-6 inline-block">
-                Turno de: <span id="currentPlayerName">Jugador 1</span>
-            </div>
-        </div>
+    <div id="gameScreen" class="hidden min-h-screen py-8 px-4">
+        <div class="max-w-7xl mx-auto">
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <!-- Left Panel - Dice & Controls -->
-            <div class="lg:col-span-2">
-                <!-- Game Info -->
-                <div class="bg-white rounded-lg shadow-2xl p-6 mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <p class="text-gray-600">Ronda</p>
-                            <p class="text-3xl font-bold text-purple-600" id="currentRound">1</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-600">Tiradas restantes</p>
-                            <p class="text-3xl font-bold text-pink-600" id="rollsLeft">3</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-600">Puntuación Actual</p>
-                            <p class="text-3xl font-bold text-red-600" id="currentScore">0</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dice Container -->
-                <div class="bg-white rounded-lg shadow-2xl p-8 mb-6">
-                    <div class="flex justify-center items-center gap-4 flex-wrap" id="diceContainer">
-                        <!-- Dice will be generated here -->
-                    </div>
-                    <p class="text-center text-gray-500 mt-4 text-sm">Haz click en un dado para bloquearlo</p>
-                </div>
-
-                <!-- Control Buttons -->
-                <div class="bg-white rounded-lg shadow-2xl p-6">
-                    <div class="flex gap-4 justify-center flex-wrap">
-                        <button id="rollBtn" onclick="rollDice()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-lg font-bold text-lg hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all shadow-lg">
-                            🎲 Tirar Dados
-                        </button>
-                        <button onclick="showScoreboard()" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transform hover:scale-105 transition-all shadow-lg">
-                            📊 Ver Tabla
-                        </button>
-                        <button onclick="backToSetup()" class="bg-gray-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-gray-700 transform hover:scale-105 transition-all shadow-lg">
-                            🏠 Menú
-                        </button>
-                    </div>
-                </div>
+            <!-- Header -->
+            <div class="mb-8 text-center">
+                <h1 class="text-3xl font-bold gradient-text mb-2">Dice Party</h1>
+                <p class="text-gray-600 text-sm">Ronda <span id="currentRound">1</span> de 13</p>
             </div>
 
-            <!-- Right Panel - Score Table -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow-2xl p-6">
-                    <h2 class="text-2xl font-bold text-center mb-4 text-purple-600" id="scoreTableTitle">Puntuación</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                    <!-- Upper Section -->
-                    <div class="mb-4">
-                        <h3 class="font-bold text-gray-700 mb-2 pb-2 border-b-2 border-purple-300">Sección Superior</h3>
-                        <div id="upperSection" class="space-y-1">
-                            <!-- Upper section rows will be generated here -->
-                        </div>
-                        <div class="mt-2 pt-2 border-t border-gray-300 flex justify-between text-sm font-semibold">
-                            <span>Subtotal:</span>
-                            <span id="upperSubtotal">0</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Bonus (63+):</span>
-                            <span id="bonusScore" class="text-green-600">0</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-purple-600 pt-2 border-t border-gray-300">
-                            <span>Total Superior:</span>
-                            <span id="upperTotal">0</span>
-                        </div>
-                    </div>
-
-                    <!-- Lower Section -->
-                    <div>
-                        <h3 class="font-bold text-gray-700 mb-2 pb-2 border-b-2 border-pink-300">Sección Inferior</h3>
-                        <div id="lowerSection" class="space-y-1">
-                            <!-- Lower section rows will be generated here -->
-                        </div>
-                        <div class="flex justify-between font-bold text-pink-600 pt-2 border-t border-gray-300 mt-2">
-                            <span>Total Inferior:</span>
-                            <span id="lowerTotal">0</span>
-                        </div>
-                    </div>
-
-                    <!-- Grand Total -->
-                    <div class="mt-4 pt-4 border-t-4 border-purple-500">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xl font-bold">TOTAL:</span>
-                            <span class="text-3xl font-bold text-red-600" id="grandTotal">0</span>
+                <!-- Left Sidebar - Players List -->
+                <div class="lg:col-span-3">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 sticky top-6">
+                        <h2 class="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Jugadores</h2>
+                        <div id="playersList" class="space-y-3">
+                            <!-- Players will be generated here -->
                         </div>
                     </div>
                 </div>
-            </div>
 
+                <!-- Center - Game Area -->
+                <div class="lg:col-span-6">
+
+                    <!-- Current Player Info -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">Turno actual</p>
+                                <h2 class="text-2xl font-bold text-gray-900" id="currentPlayerName">Jugador 1</h2>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500 mb-1">Puntos</p>
+                                <p class="text-2xl font-bold text-blue-600" id="currentScore">0</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500">Tiradas:</span>
+                                <span class="font-semibold text-gray-900" id="rollsLeft">3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dice Container -->
+                    <div class="bg-white rounded-xl shadow-sm p-8 mb-6 border border-gray-100">
+                        <div class="flex justify-center items-center gap-4 flex-wrap mb-4" id="diceContainer">
+                            <!-- Dice will be generated here -->
+                        </div>
+                        <p class="text-center text-gray-400 text-xs">Click en un dado para bloquearlo</p>
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="flex gap-3 justify-center flex-wrap">
+                        <button id="rollBtn" onclick="rollDice()" class="bg-gray-900 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-all shadow-sm">
+                            🎲 Tirar dados
+                        </button>
+                        <button onclick="showScoreboard()" class="bg-white text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-sm border border-gray-200">
+                            📊 Ver tabla
+                        </button>
+                        <button onclick="backToSetup()" class="bg-white text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-sm border border-gray-200">
+                            ← Menú
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar - Score Table -->
+                <div class="lg:col-span-3">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 sticky top-6">
+                        <h2 class="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Categorías</h2>
+
+                        <!-- Upper Section -->
+                        <div class="mb-4">
+                            <h3 class="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Superior</h3>
+                            <div id="upperSection" class="space-y-1">
+                                <!-- Upper section rows will be generated here -->
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-gray-200 space-y-1 text-xs">
+                                <div class="flex justify-between text-gray-600">
+                                    <span>Subtotal</span>
+                                    <span id="upperSubtotal" class="font-semibold">0</span>
+                                </div>
+                                <div class="flex justify-between text-gray-600">
+                                    <span>Bonus (63+)</span>
+                                    <span id="bonusScore" class="font-semibold text-green-600">0</span>
+                                </div>
+                                <div class="flex justify-between font-semibold text-gray-900">
+                                    <span>Total</span>
+                                    <span id="upperTotal">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lower Section -->
+                        <div>
+                            <h3 class="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Inferior</h3>
+                            <div id="lowerSection" class="space-y-1">
+                                <!-- Lower section rows will be generated here -->
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-gray-200 text-xs">
+                                <div class="flex justify-between font-semibold text-gray-900">
+                                    <span>Total</span>
+                                    <span id="lowerTotal">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grand Total -->
+                        <div class="mt-4 pt-4 border-t-2 border-gray-900">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-gray-900 uppercase tracking-wide text-sm">Total</span>
+                                <span class="text-2xl font-bold text-gray-900" id="grandTotal">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
     <!-- Scoreboard Modal -->
-    <div id="scoreboardModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div id="scoreboardModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold text-purple-600">📊 Tabla de Puntuaciones</h2>
-                <button onclick="hideScoreboard()" class="text-gray-500 hover:text-gray-700 text-3xl font-bold">&times;</button>
+                <h2 class="text-2xl font-bold text-gray-900">Tabla de puntuaciones</h2>
+                <button onclick="hideScoreboard()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold w-8 h-8 flex items-center justify-center">&times;</button>
             </div>
             <div id="scoreboardContent" class="overflow-x-auto">
                 <!-- Scoreboard will be generated here -->
             </div>
             <div class="text-center mt-6">
-                <button onclick="hideScoreboard()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700">
+                <button onclick="hideScoreboard()" class="bg-gray-900 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800">
                     Cerrar
                 </button>
             </div>
@@ -219,6 +277,15 @@
             playerCount: 0,
             players: []
         };
+
+        // Player colors for avatars
+        const playerColors = [
+            { bg: 'bg-blue-500', ring: 'ring-blue-500' },
+            { bg: 'bg-pink-500', ring: 'ring-pink-500' },
+            { bg: 'bg-green-500', ring: 'ring-green-500' },
+            { bg: 'bg-purple-500', ring: 'ring-purple-500' },
+            { bg: 'bg-orange-500', ring: 'ring-orange-500' }
+        ];
 
         // Game State
         let gameState = {
@@ -233,17 +300,17 @@
         // Score Categories Configuration
         const categories = {
             upper: [
-                { id: 'ones', name: 'Unos (1s)', value: 1 },
-                { id: 'twos', name: 'Doses (2s)', value: 2 },
-                { id: 'threes', name: 'Treses (3s)', value: 3 },
-                { id: 'fours', name: 'Cuatros (4s)', value: 4 },
-                { id: 'fives', name: 'Cincos (5s)', value: 5 },
-                { id: 'sixes', name: 'Seises (6s)', value: 6 }
+                { id: 'ones', name: 'Unos', value: 1 },
+                { id: 'twos', name: 'Doses', value: 2 },
+                { id: 'threes', name: 'Treses', value: 3 },
+                { id: 'fours', name: 'Cuatros', value: 4 },
+                { id: 'fives', name: 'Cincos', value: 5 },
+                { id: 'sixes', name: 'Seises', value: 6 }
             ],
             lower: [
                 { id: 'threeOfKind', name: 'Trío', points: 'Suma' },
                 { id: 'fourOfKind', name: 'Poker', points: 'Suma' },
-                { id: 'fullHouse', name: 'Full House', points: '25' },
+                { id: 'fullHouse', name: 'Full', points: '25' },
                 { id: 'smallStraight', name: 'Esc. Menor', points: '30' },
                 { id: 'largeStraight', name: 'Esc. Mayor', points: '40' },
                 { id: 'yahtzee', name: 'Yahtzee', points: '50' },
@@ -257,9 +324,11 @@
 
             // Highlight selected button
             document.querySelectorAll('.player-select-btn').forEach(btn => {
-                btn.classList.remove('ring-4', 'ring-yellow-400');
+                btn.classList.remove('bg-gray-900', 'text-white', 'border-gray-900');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
             });
-            event.target.classList.add('ring-4', 'ring-yellow-400');
+            event.target.classList.remove('bg-gray-100', 'text-gray-700');
+            event.target.classList.add('bg-gray-900', 'text-white');
 
             // Show player name inputs
             const container = document.getElementById('playerNamesContainer');
@@ -270,11 +339,11 @@
                 const inputDiv = document.createElement('div');
                 inputDiv.className = 'flex items-center gap-3';
                 inputDiv.innerHTML = `
-                    <div class="w-12 h-12 rounded-full player-color-${i} flex items-center justify-center text-white font-bold text-xl">
+                    <div class="w-10 h-10 rounded-full ${playerColors[i].bg} flex items-center justify-center text-white font-semibold text-sm">
                         ${i + 1}
                     </div>
                     <input type="text" id="player${i}Name" placeholder="Jugador ${i + 1}"
-                           class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-lg"
+                           class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:border-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-opacity-20 focus:outline-none transition-all"
                            value="Jugador ${i + 1}">
                 `;
                 inputsContainer.appendChild(inputDiv);
@@ -291,14 +360,14 @@
                 const name = document.getElementById(`player${i}Name`).value.trim() || `Jugador ${i + 1}`;
                 gameConfig.players.push({
                     name: name,
-                    color: i
+                    colorIndex: i
                 });
             }
 
             // Initialize game state
             gameState.players = gameConfig.players.map(p => ({
                 name: p.name,
-                color: p.color,
+                colorIndex: p.colorIndex,
                 scores: {
                     ones: null, twos: null, threes: null, fours: null, fives: null, sixes: null,
                     threeOfKind: null, fourOfKind: null, fullHouse: null,
@@ -323,16 +392,49 @@
         function initGameUI() {
             createDice();
             createScoreTable();
+            createPlayersList();
             updateDisplay();
-            updateCurrentPlayerBanner();
         }
 
-        function updateCurrentPlayerBanner() {
-            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-            const banner = document.getElementById('currentPlayerBanner');
-            banner.className = `text-2xl font-bold text-white rounded-lg py-3 px-6 inline-block player-color-${currentPlayer.color}`;
-            document.getElementById('currentPlayerName').textContent = currentPlayer.name;
-            document.getElementById('scoreTableTitle').textContent = `${currentPlayer.name}`;
+        function createPlayersList() {
+            const container = document.getElementById('playersList');
+            container.innerHTML = '';
+
+            gameState.players.forEach((player, index) => {
+                const playerCard = document.createElement('div');
+                playerCard.id = `player-card-${index}`;
+                playerCard.className = 'player-card p-3 rounded-lg border-2 border-transparent transition-all';
+
+                const total = calculatePlayerTotal(player);
+                const completedCategories = Object.values(player.scores).filter(s => s !== null).length;
+
+                playerCard.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full ${playerColors[player.colorIndex].bg} flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                            ${player.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-gray-900 text-sm truncate">${player.name}</p>
+                            <p class="text-xs text-gray-500">${completedCategories}/13 • ${total} pts</p>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(playerCard);
+            });
+
+            updateActivePlayer();
+        }
+
+        function updateActivePlayer() {
+            gameState.players.forEach((player, index) => {
+                const card = document.getElementById(`player-card-${index}`);
+                if (index === gameState.currentPlayerIndex) {
+                    card.classList.add('active', 'border-gray-900', 'bg-gray-50');
+                } else {
+                    card.classList.remove('active', 'border-gray-900', 'bg-gray-50');
+                }
+            });
         }
 
         // Create Dice Elements
@@ -342,7 +444,7 @@
 
             for (let i = 0; i < 5; i++) {
                 const die = document.createElement('div');
-                die.className = 'die bg-white border-4 border-gray-300 rounded-xl w-20 h-20 flex items-center justify-center text-4xl cursor-pointer select-none';
+                die.className = 'die bg-white rounded-xl w-16 h-16 flex items-center justify-center text-3xl cursor-pointer select-none';
                 die.id = `die${i}`;
                 die.textContent = '⚀';
                 die.onclick = () => toggleLock(i);
@@ -356,7 +458,7 @@
             const upperSection = document.getElementById('upperSection');
             upperSection.innerHTML = '';
             categories.upper.forEach(cat => {
-                const row = createScoreRow(cat.id, cat.name, '0');
+                const row = createScoreRow(cat.id, cat.name);
                 upperSection.appendChild(row);
             });
 
@@ -364,19 +466,19 @@
             const lowerSection = document.getElementById('lowerSection');
             lowerSection.innerHTML = '';
             categories.lower.forEach(cat => {
-                const row = createScoreRow(cat.id, cat.name, cat.points);
+                const row = createScoreRow(cat.id, cat.name);
                 lowerSection.appendChild(row);
             });
         }
 
         // Create Score Row
-        function createScoreRow(id, name, defaultPoints) {
+        function createScoreRow(id, name) {
             const row = document.createElement('div');
-            row.className = 'score-cell flex justify-between items-center p-2 rounded';
+            row.className = 'score-cell flex justify-between items-center px-3 py-2 rounded-lg text-sm';
             row.id = `row-${id}`;
             row.innerHTML = `
-                <span class="text-sm font-medium">${name}</span>
-                <span class="font-bold text-blue-600" id="score-${id}">-</span>
+                <span class="font-medium text-gray-700">${name}</span>
+                <span class="font-semibold text-gray-900" id="score-${id}">-</span>
             `;
             row.onclick = () => selectScore(id);
             return row;
@@ -399,7 +501,7 @@
                 if (!gameState.locked[i]) {
                     const die = document.getElementById(`die${i}`);
                     die.classList.add('rolling');
-                    setTimeout(() => die.classList.remove('rolling'), 500);
+                    setTimeout(() => die.classList.remove('rolling'), 600);
                     gameState.dice[i] = Math.floor(Math.random() * 6) + 1;
                 }
             }
@@ -419,22 +521,23 @@
 
                 if (gameState.locked[i]) {
                     die.classList.add('locked');
-                    die.classList.remove('border-gray-300');
-                    die.classList.add('border-blue-500');
                 } else {
                     die.classList.remove('locked');
-                    die.classList.remove('border-blue-500');
-                    die.classList.add('border-gray-300');
                 }
             }
         }
 
         // Update Display
         function updateDisplay() {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
             document.getElementById('currentRound').textContent = gameState.currentRound;
+            document.getElementById('currentPlayerName').textContent = currentPlayer.name;
             document.getElementById('rollsLeft').textContent = gameState.rollsLeft;
+
             updateDiceDisplay();
             updateTotalScores();
+            updateActivePlayer();
         }
 
         // Calculate Possible Scores
@@ -538,39 +641,32 @@
             row.classList.add('used');
 
             updateTotalScores();
-            nextTurn();
+
+            // Update players list immediately
+            createPlayersList();
+
+            // Move to next turn after a short delay
+            setTimeout(() => {
+                nextTurn();
+            }, 300);
         }
 
         // Next Turn
         function nextTurn() {
-            // Check if current player has completed all categories
-            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-            const allCategoriesUsed = Object.values(currentPlayer.scores).every(score => score !== null);
+            // Move to next player
+            gameState.currentPlayerIndex++;
 
-            if (allCategoriesUsed) {
-                // Move to next player
-                gameState.currentPlayerIndex++;
+            // Check if we've cycled through all players
+            if (gameState.currentPlayerIndex >= gameState.players.length) {
+                gameState.currentPlayerIndex = 0;
+                gameState.currentRound++;
 
-                if (gameState.currentPlayerIndex >= gameState.players.length) {
-                    // All players finished this round
-                    gameState.currentPlayerIndex = 0;
-                    gameState.currentRound++;
+                // Check if game is over (all players completed all categories)
+                const allPlayersFinished = gameState.players.every(player =>
+                    Object.values(player.scores).every(score => score !== null)
+                );
 
-                    // Check if game is over (all players completed all rounds)
-                    if (gameState.currentRound > 13) {
-                        endGame();
-                        return;
-                    }
-                }
-
-                // Check if next player has also finished
-                const nextPlayer = gameState.players[gameState.currentPlayerIndex];
-                const nextAllCategoriesUsed = Object.values(nextPlayer.scores).every(score => score !== null);
-
-                if (nextAllCategoriesUsed && gameState.currentPlayerIndex < gameState.players.length - 1) {
-                    nextTurn();
-                    return;
-                } else if (nextAllCategoriesUsed) {
+                if (allPlayersFinished) {
                     endGame();
                     return;
                 }
@@ -582,7 +678,6 @@
             gameState.dice = [1, 1, 1, 1, 1];
 
             updateDisplay();
-            updateCurrentPlayerBanner();
             loadPlayerScores();
             clearPossibleScores();
         }
@@ -679,56 +774,56 @@
             const modal = document.getElementById('scoreboardModal');
             const content = document.getElementById('scoreboardContent');
 
-            let html = '<table class="w-full border-collapse">';
-            html += '<thead><tr class="bg-purple-600 text-white">';
-            html += '<th class="p-3 text-left">Categoría</th>';
+            let html = '<table class="w-full border-collapse text-sm">';
+            html += '<thead><tr class="border-b-2 border-gray-900">';
+            html += '<th class="p-3 text-left font-semibold text-gray-900">Categoría</th>';
 
-            gameState.players.forEach((player, index) => {
-                html += `<th class="p-3 text-center player-color-${player.color} text-white">${player.name}</th>`;
+            gameState.players.forEach((player) => {
+                html += `<th class="p-3 text-center font-semibold text-gray-900">${player.name}</th>`;
             });
             html += '</tr></thead><tbody>';
 
             // Upper section
-            html += '<tr class="bg-purple-100 font-bold"><td colspan="' + (gameState.players.length + 1) + '" class="p-2">Sección Superior</td></tr>';
+            html += '<tr class="bg-gray-100"><td colspan="' + (gameState.players.length + 1) + '" class="p-2 font-semibold text-xs uppercase tracking-wide text-gray-700">Sección Superior</td></tr>';
             categories.upper.forEach(cat => {
-                html += '<tr class="border-b">';
-                html += `<td class="p-2">${cat.name}</td>`;
+                html += '<tr class="border-b border-gray-200">';
+                html += `<td class="p-2 text-gray-700">${cat.name}</td>`;
                 gameState.players.forEach(player => {
                     const score = player.scores[cat.id];
-                    html += `<td class="p-2 text-center">${score !== null ? score : '-'}</td>`;
+                    html += `<td class="p-2 text-center font-medium">${score !== null ? score : '-'}</td>`;
                 });
                 html += '</tr>';
             });
 
             // Upper totals
-            html += '<tr class="bg-gray-100 font-semibold"><td class="p-2">Bonus (63+)</td>';
+            html += '<tr class="bg-gray-50"><td class="p-2 text-gray-600 text-xs">Bonus (63+)</td>';
             gameState.players.forEach(player => {
                 let upperSum = 0;
                 categories.upper.forEach(cat => {
                     if (player.scores[cat.id] !== null) upperSum += player.scores[cat.id];
                 });
                 const bonus = upperSum >= 63 ? 35 : 0;
-                html += `<td class="p-2 text-center text-green-600">${bonus}</td>`;
+                html += `<td class="p-2 text-center font-medium text-green-600">${bonus}</td>`;
             });
             html += '</tr>';
 
             // Lower section
-            html += '<tr class="bg-pink-100 font-bold"><td colspan="' + (gameState.players.length + 1) + '" class="p-2">Sección Inferior</td></tr>';
+            html += '<tr class="bg-gray-100"><td colspan="' + (gameState.players.length + 1) + '" class="p-2 font-semibold text-xs uppercase tracking-wide text-gray-700">Sección Inferior</td></tr>';
             categories.lower.forEach(cat => {
-                html += '<tr class="border-b">';
-                html += `<td class="p-2">${cat.name}</td>`;
+                html += '<tr class="border-b border-gray-200">';
+                html += `<td class="p-2 text-gray-700">${cat.name}</td>`;
                 gameState.players.forEach(player => {
                     const score = player.scores[cat.id];
-                    html += `<td class="p-2 text-center">${score !== null ? score : '-'}</td>`;
+                    html += `<td class="p-2 text-center font-medium">${score !== null ? score : '-'}</td>`;
                 });
                 html += '</tr>';
             });
 
             // Grand totals
-            html += '<tr class="bg-purple-600 text-white font-bold text-lg"><td class="p-3">TOTAL FINAL</td>';
+            html += '<tr class="bg-gray-900 text-white font-bold"><td class="p-3">TOTAL FINAL</td>';
             gameState.players.forEach(player => {
                 const total = calculatePlayerTotal(player);
-                html += `<td class="p-3 text-center">${total}</td>`;
+                html += `<td class="p-3 text-center text-lg">${total}</td>`;
             });
             html += '</tr>';
 
@@ -746,20 +841,20 @@
             const results = gameState.players.map(player => ({
                 name: player.name,
                 total: calculatePlayerTotal(player),
-                color: player.color
+                colorIndex: player.colorIndex
             }));
 
             results.sort((a, b) => b.total - a.total);
 
-            let message = '🎉 ¡Juego Terminado! 🎉\n\n';
-            message += '🏆 RESULTADOS FINALES:\n\n';
+            let message = '🎉 Juego Terminado 🎉\n\n';
+            message += 'RANKING FINAL:\n\n';
 
             results.forEach((player, index) => {
                 const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '  ';
                 message += `${medal} ${index + 1}. ${player.name}: ${player.total} puntos\n`;
             });
 
-            message += `\n¡Felicidades ${results[0].name}! 🎊`;
+            message += `\n¡Felicidades ${results[0].name}!`;
 
             setTimeout(() => {
                 alert(message);
@@ -769,7 +864,7 @@
 
         // Back to Setup
         function backToSetup() {
-            if (confirm('¿Estás seguro de que quieres volver al menú principal? Se perderá el progreso actual.')) {
+            if (confirm('¿Volver al menú? Se perderá el progreso actual.')) {
                 document.getElementById('gameScreen').classList.add('hidden');
                 document.getElementById('setupScreen').classList.remove('hidden');
 
@@ -778,7 +873,8 @@
                 document.getElementById('playerNamesContainer').classList.add('hidden');
                 document.getElementById('startGameBtn').classList.add('hidden');
                 document.querySelectorAll('.player-select-btn').forEach(btn => {
-                    btn.classList.remove('ring-4', 'ring-yellow-400');
+                    btn.classList.remove('bg-gray-900', 'text-white');
+                    btn.classList.add('bg-gray-100', 'text-gray-700');
                 });
             }
         }
