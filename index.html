@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dice Party - Juego de Dados</title>
+    <title>Dice Party - Juego de Dados Multijugador</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes roll {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .rolling {
             animation: roll 0.5s ease-in-out;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
         }
         .die {
             transition: all 0.3s ease;
@@ -33,17 +40,65 @@
             background-color: #f3f4f6;
             color: #6b7280;
         }
+        .player-color-0 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .player-color-1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .player-color-2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .player-color-3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .player-color-4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-bold text-white mb-2">🎲 Dice Party 🎲</h1>
-            <p class="text-white text-lg">¡Estilo Plato App!</p>
+
+    <!-- Setup Screen -->
+    <div id="setupScreen" class="container mx-auto px-4 py-8 max-w-2xl">
+        <div class="text-center mb-8 fade-in">
+            <h1 class="text-6xl font-bold text-white mb-2">🎲 Dice Party 🎲</h1>
+            <p class="text-white text-xl">¡Juego Multijugador!</p>
         </div>
 
-        <!-- Main Game Container -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8 fade-in">
+            <h2 class="text-3xl font-bold text-center mb-6 text-purple-600">Configuración del Juego</h2>
+
+            <!-- Number of Players -->
+            <div class="mb-6">
+                <label class="block text-gray-700 font-bold mb-3 text-lg">¿Cuántos jugadores? (1-5)</label>
+                <div class="flex gap-3 justify-center">
+                    <button onclick="selectPlayerCount(1)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">1</button>
+                    <button onclick="selectPlayerCount(2)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">2</button>
+                    <button onclick="selectPlayerCount(3)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">3</button>
+                    <button onclick="selectPlayerCount(4)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">4</button>
+                    <button onclick="selectPlayerCount(5)" class="player-select-btn px-6 py-3 rounded-lg font-bold text-white bg-purple-500 hover:bg-purple-600 transition-all transform hover:scale-105">5</button>
+                </div>
+            </div>
+
+            <!-- Player Names -->
+            <div id="playerNamesContainer" class="mb-6 hidden">
+                <label class="block text-gray-700 font-bold mb-3 text-lg">Nombres de los jugadores:</label>
+                <div id="playerNameInputs" class="space-y-3">
+                    <!-- Player name inputs will be generated here -->
+                </div>
+            </div>
+
+            <!-- Start Game Button -->
+            <div class="text-center">
+                <button id="startGameBtn" onclick="startGame()" class="hidden bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-lg font-bold text-xl hover:from-green-600 hover:to-blue-600 transform hover:scale-105 transition-all shadow-lg">
+                    🎮 ¡Comenzar Juego!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="container mx-auto px-4 py-8 max-w-7xl hidden">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-bold text-white mb-2">🎲 Dice Party 🎲</h1>
+            <div id="currentPlayerBanner" class="text-2xl font-bold text-white bg-black bg-opacity-30 rounded-lg py-3 px-6 inline-block">
+                Turno de: <span id="currentPlayerName">Jugador 1</span>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Left Panel - Dice & Controls -->
@@ -52,16 +107,16 @@
                 <div class="bg-white rounded-lg shadow-2xl p-6 mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <div>
-                            <p class="text-gray-600">Turno</p>
-                            <p class="text-3xl font-bold text-purple-600" id="currentTurn">1</p>
+                            <p class="text-gray-600">Ronda</p>
+                            <p class="text-3xl font-bold text-purple-600" id="currentRound">1</p>
                         </div>
                         <div>
                             <p class="text-gray-600">Tiradas restantes</p>
                             <p class="text-3xl font-bold text-pink-600" id="rollsLeft">3</p>
                         </div>
                         <div>
-                            <p class="text-gray-600">Puntuación Total</p>
-                            <p class="text-3xl font-bold text-red-600" id="totalScore">0</p>
+                            <p class="text-gray-600">Puntuación Actual</p>
+                            <p class="text-3xl font-bold text-red-600" id="currentScore">0</p>
                         </div>
                     </div>
                 </div>
@@ -76,12 +131,15 @@
 
                 <!-- Control Buttons -->
                 <div class="bg-white rounded-lg shadow-2xl p-6">
-                    <div class="flex gap-4 justify-center">
-                        <button id="rollBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-lg font-bold text-lg hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all shadow-lg">
+                    <div class="flex gap-4 justify-center flex-wrap">
+                        <button id="rollBtn" onclick="rollDice()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-lg font-bold text-lg hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all shadow-lg">
                             🎲 Tirar Dados
                         </button>
-                        <button id="newGameBtn" class="bg-gray-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-gray-700 transform hover:scale-105 transition-all shadow-lg">
-                            🔄 Nuevo Juego
+                        <button onclick="showScoreboard()" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transform hover:scale-105 transition-all shadow-lg">
+                            📊 Ver Tabla
+                        </button>
+                        <button onclick="backToSetup()" class="bg-gray-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-gray-700 transform hover:scale-105 transition-all shadow-lg">
+                            🏠 Menú
                         </button>
                     </div>
                 </div>
@@ -90,7 +148,7 @@
             <!-- Right Panel - Score Table -->
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-lg shadow-2xl p-6">
-                    <h2 class="text-2xl font-bold text-center mb-4 text-purple-600">Puntuación</h2>
+                    <h2 class="text-2xl font-bold text-center mb-4 text-purple-600" id="scoreTableTitle">Puntuación</h2>
 
                     <!-- Upper Section -->
                     <div class="mb-4">
@@ -127,7 +185,7 @@
                     <!-- Grand Total -->
                     <div class="mt-4 pt-4 border-t-4 border-purple-500">
                         <div class="flex justify-between items-center">
-                            <span class="text-xl font-bold">TOTAL FINAL:</span>
+                            <span class="text-xl font-bold">TOTAL:</span>
                             <span class="text-3xl font-bold text-red-600" id="grandTotal">0</span>
                         </div>
                     </div>
@@ -137,18 +195,39 @@
         </div>
     </div>
 
+    <!-- Scoreboard Modal -->
+    <div id="scoreboardModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-purple-600">📊 Tabla de Puntuaciones</h2>
+                <button onclick="hideScoreboard()" class="text-gray-500 hover:text-gray-700 text-3xl font-bold">&times;</button>
+            </div>
+            <div id="scoreboardContent" class="overflow-x-auto">
+                <!-- Scoreboard will be generated here -->
+            </div>
+            <div class="text-center mt-6">
+                <button onclick="hideScoreboard()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-700">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Game Configuration
+        let gameConfig = {
+            playerCount: 0,
+            players: []
+        };
+
         // Game State
-        const gameState = {
+        let gameState = {
+            currentPlayerIndex: 0,
+            currentRound: 1,
             dice: [1, 1, 1, 1, 1],
             locked: [false, false, false, false, false],
             rollsLeft: 3,
-            currentTurn: 1,
-            scores: {
-                ones: null, twos: null, threes: null, fours: null, fives: null, sixes: null,
-                threeOfKind: null, fourOfKind: null, fullHouse: null,
-                smallStraight: null, largeStraight: null, yahtzee: null, chance: null
-            }
+            players: []
         };
 
         // Score Categories Configuration
@@ -162,23 +241,98 @@
                 { id: 'sixes', name: 'Seises (6s)', value: 6 }
             ],
             lower: [
-                { id: 'threeOfKind', name: 'Trío (3 iguales)', points: 'Suma' },
-                { id: 'fourOfKind', name: 'Poker (4 iguales)', points: 'Suma' },
+                { id: 'threeOfKind', name: 'Trío', points: 'Suma' },
+                { id: 'fourOfKind', name: 'Poker', points: 'Suma' },
                 { id: 'fullHouse', name: 'Full House', points: '25' },
-                { id: 'smallStraight', name: 'Escalera Menor', points: '30' },
-                { id: 'largeStraight', name: 'Escalera Mayor', points: '40' },
-                { id: 'yahtzee', name: 'Yahtzee (5 iguales)', points: '50' },
+                { id: 'smallStraight', name: 'Esc. Menor', points: '30' },
+                { id: 'largeStraight', name: 'Esc. Mayor', points: '40' },
+                { id: 'yahtzee', name: 'Yahtzee', points: '50' },
                 { id: 'chance', name: 'Suerte', points: 'Suma' }
             ]
         };
 
-        // Initialize Game
-        function initGame() {
+        // Setup Functions
+        function selectPlayerCount(count) {
+            gameConfig.playerCount = count;
+
+            // Highlight selected button
+            document.querySelectorAll('.player-select-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-yellow-400');
+            });
+            event.target.classList.add('ring-4', 'ring-yellow-400');
+
+            // Show player name inputs
+            const container = document.getElementById('playerNamesContainer');
+            const inputsContainer = document.getElementById('playerNameInputs');
+            inputsContainer.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                const inputDiv = document.createElement('div');
+                inputDiv.className = 'flex items-center gap-3';
+                inputDiv.innerHTML = `
+                    <div class="w-12 h-12 rounded-full player-color-${i} flex items-center justify-center text-white font-bold text-xl">
+                        ${i + 1}
+                    </div>
+                    <input type="text" id="player${i}Name" placeholder="Jugador ${i + 1}"
+                           class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-lg"
+                           value="Jugador ${i + 1}">
+                `;
+                inputsContainer.appendChild(inputDiv);
+            }
+
+            container.classList.remove('hidden');
+            document.getElementById('startGameBtn').classList.remove('hidden');
+        }
+
+        function startGame() {
+            // Get player names
+            gameConfig.players = [];
+            for (let i = 0; i < gameConfig.playerCount; i++) {
+                const name = document.getElementById(`player${i}Name`).value.trim() || `Jugador ${i + 1}`;
+                gameConfig.players.push({
+                    name: name,
+                    color: i
+                });
+            }
+
+            // Initialize game state
+            gameState.players = gameConfig.players.map(p => ({
+                name: p.name,
+                color: p.color,
+                scores: {
+                    ones: null, twos: null, threes: null, fours: null, fives: null, sixes: null,
+                    threeOfKind: null, fourOfKind: null, fullHouse: null,
+                    smallStraight: null, largeStraight: null, yahtzee: null, chance: null
+                }
+            }));
+
+            gameState.currentPlayerIndex = 0;
+            gameState.currentRound = 1;
+            gameState.dice = [1, 1, 1, 1, 1];
+            gameState.locked = [false, false, false, false, false];
+            gameState.rollsLeft = 3;
+
+            // Switch screens
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+
+            // Initialize game UI
+            initGameUI();
+        }
+
+        function initGameUI() {
             createDice();
             createScoreTable();
             updateDisplay();
-            document.getElementById('rollBtn').addEventListener('click', rollDice);
-            document.getElementById('newGameBtn').addEventListener('click', newGame);
+            updateCurrentPlayerBanner();
+        }
+
+        function updateCurrentPlayerBanner() {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const banner = document.getElementById('currentPlayerBanner');
+            banner.className = `text-2xl font-bold text-white rounded-lg py-3 px-6 inline-block player-color-${currentPlayer.color}`;
+            document.getElementById('currentPlayerName').textContent = currentPlayer.name;
+            document.getElementById('scoreTableTitle').textContent = `${currentPlayer.name}`;
         }
 
         // Create Dice Elements
@@ -191,7 +345,7 @@
                 die.className = 'die bg-white border-4 border-gray-300 rounded-xl w-20 h-20 flex items-center justify-center text-4xl cursor-pointer select-none';
                 die.id = `die${i}`;
                 die.textContent = '⚀';
-                die.addEventListener('click', () => toggleLock(i));
+                die.onclick = () => toggleLock(i);
                 container.appendChild(die);
             }
         }
@@ -200,6 +354,7 @@
         function createScoreTable() {
             // Upper Section
             const upperSection = document.getElementById('upperSection');
+            upperSection.innerHTML = '';
             categories.upper.forEach(cat => {
                 const row = createScoreRow(cat.id, cat.name, '0');
                 upperSection.appendChild(row);
@@ -207,6 +362,7 @@
 
             // Lower Section
             const lowerSection = document.getElementById('lowerSection');
+            lowerSection.innerHTML = '';
             categories.lower.forEach(cat => {
                 const row = createScoreRow(cat.id, cat.name, cat.points);
                 lowerSection.appendChild(row);
@@ -216,13 +372,13 @@
         // Create Score Row
         function createScoreRow(id, name, defaultPoints) {
             const row = document.createElement('div');
-            row.className = 'score-cell flex justify-between items-center p-2 rounded hover:bg-blue-50';
+            row.className = 'score-cell flex justify-between items-center p-2 rounded';
             row.id = `row-${id}`;
             row.innerHTML = `
-                <span class="text-sm">${name}</span>
+                <span class="text-sm font-medium">${name}</span>
                 <span class="font-bold text-blue-600" id="score-${id}">-</span>
             `;
-            row.addEventListener('click', () => selectScore(id));
+            row.onclick = () => selectScore(id);
             return row;
         }
 
@@ -275,7 +431,7 @@
 
         // Update Display
         function updateDisplay() {
-            document.getElementById('currentTurn').textContent = gameState.currentTurn;
+            document.getElementById('currentRound').textContent = gameState.currentRound;
             document.getElementById('rollsLeft').textContent = gameState.rollsLeft;
             updateDiceDisplay();
             updateTotalScores();
@@ -283,6 +439,7 @@
 
         // Calculate Possible Scores
         function updatePossibleScores() {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
             const dice = gameState.dice;
 
             // Count occurrences
@@ -291,44 +448,44 @@
 
             // Update each category
             categories.upper.forEach(cat => {
-                if (gameState.scores[cat.id] === null) {
+                if (currentPlayer.scores[cat.id] === null) {
                     const score = (counts[cat.value] || 0) * cat.value;
                     document.getElementById(`score-${cat.id}`).textContent = score;
                 }
             });
 
             // Lower section
-            if (gameState.scores.threeOfKind === null) {
+            if (currentPlayer.scores.threeOfKind === null) {
                 const score = hasNOfKind(3) ? sumDice() : 0;
                 document.getElementById('score-threeOfKind').textContent = score;
             }
 
-            if (gameState.scores.fourOfKind === null) {
+            if (currentPlayer.scores.fourOfKind === null) {
                 const score = hasNOfKind(4) ? sumDice() : 0;
                 document.getElementById('score-fourOfKind').textContent = score;
             }
 
-            if (gameState.scores.fullHouse === null) {
+            if (currentPlayer.scores.fullHouse === null) {
                 const score = isFullHouse() ? 25 : 0;
                 document.getElementById('score-fullHouse').textContent = score;
             }
 
-            if (gameState.scores.smallStraight === null) {
+            if (currentPlayer.scores.smallStraight === null) {
                 const score = isSmallStraight() ? 30 : 0;
                 document.getElementById('score-smallStraight').textContent = score;
             }
 
-            if (gameState.scores.largeStraight === null) {
+            if (currentPlayer.scores.largeStraight === null) {
                 const score = isLargeStraight() ? 40 : 0;
                 document.getElementById('score-largeStraight').textContent = score;
             }
 
-            if (gameState.scores.yahtzee === null) {
+            if (currentPlayer.scores.yahtzee === null) {
                 const score = hasNOfKind(5) ? 50 : 0;
                 document.getElementById('score-yahtzee').textContent = score;
             }
 
-            if (gameState.scores.chance === null) {
+            if (currentPlayer.scores.chance === null) {
                 document.getElementById('score-chance').textContent = sumDice();
             }
         }
@@ -366,42 +523,95 @@
 
         // Select Score
         function selectScore(category) {
-            if (gameState.scores[category] !== null) return;
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+            if (currentPlayer.scores[category] !== null) return;
             if (gameState.rollsLeft === 3) return;
 
             const scoreElement = document.getElementById(`score-${category}`);
             const score = parseInt(scoreElement.textContent) || 0;
 
-            gameState.scores[category] = score;
+            currentPlayer.scores[category] = score;
             scoreElement.textContent = score;
 
             const row = document.getElementById(`row-${category}`);
             row.classList.add('used');
-            row.style.cursor = 'default';
 
+            updateTotalScores();
             nextTurn();
         }
 
         // Next Turn
         function nextTurn() {
-            gameState.currentTurn++;
+            // Check if current player has completed all categories
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            const allCategoriesUsed = Object.values(currentPlayer.scores).every(score => score !== null);
+
+            if (allCategoriesUsed) {
+                // Move to next player
+                gameState.currentPlayerIndex++;
+
+                if (gameState.currentPlayerIndex >= gameState.players.length) {
+                    // All players finished this round
+                    gameState.currentPlayerIndex = 0;
+                    gameState.currentRound++;
+
+                    // Check if game is over (all players completed all rounds)
+                    if (gameState.currentRound > 13) {
+                        endGame();
+                        return;
+                    }
+                }
+
+                // Check if next player has also finished
+                const nextPlayer = gameState.players[gameState.currentPlayerIndex];
+                const nextAllCategoriesUsed = Object.values(nextPlayer.scores).every(score => score !== null);
+
+                if (nextAllCategoriesUsed && gameState.currentPlayerIndex < gameState.players.length - 1) {
+                    nextTurn();
+                    return;
+                } else if (nextAllCategoriesUsed) {
+                    endGame();
+                    return;
+                }
+            }
+
+            // Reset for next turn
             gameState.rollsLeft = 3;
             gameState.locked = [false, false, false, false, false];
             gameState.dice = [1, 1, 1, 1, 1];
 
-            if (gameState.currentTurn > 13) {
-                endGame();
-                return;
-            }
-
             updateDisplay();
+            updateCurrentPlayerBanner();
+            loadPlayerScores();
             clearPossibleScores();
+        }
+
+        // Load Player Scores
+        function loadPlayerScores() {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+            Object.keys(currentPlayer.scores).forEach(key => {
+                const scoreElement = document.getElementById(`score-${key}`);
+                const row = document.getElementById(`row-${key}`);
+
+                if (currentPlayer.scores[key] !== null) {
+                    scoreElement.textContent = currentPlayer.scores[key];
+                    row.classList.add('used');
+                } else {
+                    scoreElement.textContent = '-';
+                    row.classList.remove('used');
+                }
+            });
+
+            updateTotalScores();
         }
 
         // Clear Possible Scores
         function clearPossibleScores() {
-            Object.keys(gameState.scores).forEach(key => {
-                if (gameState.scores[key] === null) {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            Object.keys(currentPlayer.scores).forEach(key => {
+                if (currentPlayer.scores[key] === null) {
                     document.getElementById(`score-${key}`).textContent = '-';
                 }
             });
@@ -409,11 +619,13 @@
 
         // Update Total Scores
         function updateTotalScores() {
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
             // Upper section
             let upperSum = 0;
             categories.upper.forEach(cat => {
-                if (gameState.scores[cat.id] !== null) {
-                    upperSum += gameState.scores[cat.id];
+                if (currentPlayer.scores[cat.id] !== null) {
+                    upperSum += currentPlayer.scores[cat.id];
                 }
             });
             document.getElementById('upperSubtotal').textContent = upperSum;
@@ -428,8 +640,8 @@
             // Lower section
             let lowerSum = 0;
             categories.lower.forEach(cat => {
-                if (gameState.scores[cat.id] !== null) {
-                    lowerSum += gameState.scores[cat.id];
+                if (currentPlayer.scores[cat.id] !== null) {
+                    lowerSum += currentPlayer.scores[cat.id];
                 }
             });
             document.getElementById('lowerTotal').textContent = lowerSum;
@@ -437,44 +649,139 @@
             // Grand total
             const grandTotal = upperTotal + lowerSum;
             document.getElementById('grandTotal').textContent = grandTotal;
-            document.getElementById('totalScore').textContent = grandTotal;
+            document.getElementById('currentScore').textContent = grandTotal;
+        }
+
+        // Calculate Player Total
+        function calculatePlayerTotal(player) {
+            let upperSum = 0;
+            categories.upper.forEach(cat => {
+                if (player.scores[cat.id] !== null) {
+                    upperSum += player.scores[cat.id];
+                }
+            });
+
+            const bonus = upperSum >= 63 ? 35 : 0;
+            const upperTotal = upperSum + bonus;
+
+            let lowerSum = 0;
+            categories.lower.forEach(cat => {
+                if (player.scores[cat.id] !== null) {
+                    lowerSum += player.scores[cat.id];
+                }
+            });
+
+            return upperTotal + lowerSum;
+        }
+
+        // Show Scoreboard
+        function showScoreboard() {
+            const modal = document.getElementById('scoreboardModal');
+            const content = document.getElementById('scoreboardContent');
+
+            let html = '<table class="w-full border-collapse">';
+            html += '<thead><tr class="bg-purple-600 text-white">';
+            html += '<th class="p-3 text-left">Categoría</th>';
+
+            gameState.players.forEach((player, index) => {
+                html += `<th class="p-3 text-center player-color-${player.color} text-white">${player.name}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            // Upper section
+            html += '<tr class="bg-purple-100 font-bold"><td colspan="' + (gameState.players.length + 1) + '" class="p-2">Sección Superior</td></tr>';
+            categories.upper.forEach(cat => {
+                html += '<tr class="border-b">';
+                html += `<td class="p-2">${cat.name}</td>`;
+                gameState.players.forEach(player => {
+                    const score = player.scores[cat.id];
+                    html += `<td class="p-2 text-center">${score !== null ? score : '-'}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            // Upper totals
+            html += '<tr class="bg-gray-100 font-semibold"><td class="p-2">Bonus (63+)</td>';
+            gameState.players.forEach(player => {
+                let upperSum = 0;
+                categories.upper.forEach(cat => {
+                    if (player.scores[cat.id] !== null) upperSum += player.scores[cat.id];
+                });
+                const bonus = upperSum >= 63 ? 35 : 0;
+                html += `<td class="p-2 text-center text-green-600">${bonus}</td>`;
+            });
+            html += '</tr>';
+
+            // Lower section
+            html += '<tr class="bg-pink-100 font-bold"><td colspan="' + (gameState.players.length + 1) + '" class="p-2">Sección Inferior</td></tr>';
+            categories.lower.forEach(cat => {
+                html += '<tr class="border-b">';
+                html += `<td class="p-2">${cat.name}</td>`;
+                gameState.players.forEach(player => {
+                    const score = player.scores[cat.id];
+                    html += `<td class="p-2 text-center">${score !== null ? score : '-'}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            // Grand totals
+            html += '<tr class="bg-purple-600 text-white font-bold text-lg"><td class="p-3">TOTAL FINAL</td>';
+            gameState.players.forEach(player => {
+                const total = calculatePlayerTotal(player);
+                html += `<td class="p-3 text-center">${total}</td>`;
+            });
+            html += '</tr>';
+
+            html += '</tbody></table>';
+            content.innerHTML = html;
+            modal.classList.remove('hidden');
+        }
+
+        function hideScoreboard() {
+            document.getElementById('scoreboardModal').classList.add('hidden');
         }
 
         // End Game
         function endGame() {
-            const finalScore = document.getElementById('grandTotal').textContent;
+            const results = gameState.players.map(player => ({
+                name: player.name,
+                total: calculatePlayerTotal(player),
+                color: player.color
+            }));
+
+            results.sort((a, b) => b.total - a.total);
+
+            let message = '🎉 ¡Juego Terminado! 🎉\n\n';
+            message += '🏆 RESULTADOS FINALES:\n\n';
+
+            results.forEach((player, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '  ';
+                message += `${medal} ${index + 1}. ${player.name}: ${player.total} puntos\n`;
+            });
+
+            message += `\n¡Felicidades ${results[0].name}! 🎊`;
+
             setTimeout(() => {
-                alert(`🎉 ¡Juego Terminado! 🎉\n\nTu puntuación final: ${finalScore} puntos`);
+                alert(message);
+                showScoreboard();
             }, 500);
         }
 
-        // New Game
-        function newGame() {
-            if (confirm('¿Estás seguro de que quieres empezar un nuevo juego?')) {
-                gameState.dice = [1, 1, 1, 1, 1];
-                gameState.locked = [false, false, false, false, false];
-                gameState.rollsLeft = 3;
-                gameState.currentTurn = 1;
-                gameState.scores = {
-                    ones: null, twos: null, threes: null, fours: null, fives: null, sixes: null,
-                    threeOfKind: null, fourOfKind: null, fullHouse: null,
-                    smallStraight: null, largeStraight: null, yahtzee: null, chance: null
-                };
+        // Back to Setup
+        function backToSetup() {
+            if (confirm('¿Estás seguro de que quieres volver al menú principal? Se perderá el progreso actual.')) {
+                document.getElementById('gameScreen').classList.add('hidden');
+                document.getElementById('setupScreen').classList.remove('hidden');
 
-                // Reset UI
-                Object.keys(gameState.scores).forEach(key => {
-                    const row = document.getElementById(`row-${key}`);
-                    row.classList.remove('used');
-                    row.style.cursor = 'pointer';
-                    document.getElementById(`score-${key}`).textContent = '-';
+                // Reset
+                gameConfig = { playerCount: 0, players: [] };
+                document.getElementById('playerNamesContainer').classList.add('hidden');
+                document.getElementById('startGameBtn').classList.add('hidden');
+                document.querySelectorAll('.player-select-btn').forEach(btn => {
+                    btn.classList.remove('ring-4', 'ring-yellow-400');
                 });
-
-                updateDisplay();
             }
         }
-
-        // Start the game when page loads
-        initGame();
     </script>
 </body>
 </html>
